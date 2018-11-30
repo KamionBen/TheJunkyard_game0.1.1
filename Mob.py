@@ -1,7 +1,7 @@
 class Mob:
     id = 0
 
-    def __init__(self, intel=1, health=70, aim=45, mobility=100, will=1):
+    def __init__(self, intel=1, health=70, aim=55, mobility=100, will=1):
         """
         Classe miroir de Member, mais pour les mobs
         :param name: Le nom du mob

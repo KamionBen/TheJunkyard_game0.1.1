@@ -1,5 +1,5 @@
 from random import choice, randrange
-
+from Weapon import *
 
 class Member:
     id = 0
@@ -167,9 +167,6 @@ class Temper:
         return "Temper(%s)" % temper
 
 
-weapon_type = ['Pistolet automatique', 'Fusil automatique', 'Fusil de précision']
-
-
 class Skills:
     def __init__(self, preset=None):
         """ Classe permettant de gérer les compétences d'armes """
@@ -178,7 +175,7 @@ class Skills:
         self.skills = {}
 
         if preset is None:
-            for type in weapon_type:
+            for type in weapon_type.keys():
                 self.skills[type] = randrange(0, 30)
 
         self.note = {range(0, 10): ('F', 0.6),

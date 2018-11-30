@@ -111,7 +111,13 @@ class Tutorial:
         # Recherche des hitbox
         for member in self.members:
             if member.hitbox.collidepoint(pos):
+                self.mobs.unselect_all()
                 self.members.select(member)
+
+        for mob in self.mobs:
+            if mob.hitbox.collidepoint(pos):
+                self.members.unselect_all()
+                self.mobs.select(mob)
 
         # Recherche dans le menu
         for key, rect in self.frame_list.items():
@@ -232,21 +238,29 @@ class Tutorial:
         """ Affichage de menu """
         # Détails
         pygame.draw.rect(window, GREY50, (0, 578, 320, 144))
+        entity_selected = False
         for member in self.members:
             if member.selected:
-                name = FONT28.render(member.name, 1, WHITE)
-                tile = FONT8.render(str(member.tile), 1, WHITE)
-                status = FONT8.render("Status : %s" % member.status, 1, WHITE)
-                cover = FONT8.render("Cover bonus : +%s" % member.cover_bonus, 1, WHITE)
-                hitchance = FONT8.render("HitChance : {}%".format(member.hit_chance), 1, WHITE)
-                target = FONT8.render("Target : %s" % member.target, 1, WHITE)
+                entity_details = member
+                entity_selected = True
+        for mob in self.mobs:
+            if mob.selected:
+                entity_details = mob
+                entity_selected = True
+        if entity_selected:
+            name = FONT28.render(entity_details.name, 1, WHITE)
+            tile = FONT8.render(str(entity_details.tile), 1, WHITE)
+            status = FONT8.render("Status : %s" % entity_details.status, 1, WHITE)
+            cover = FONT8.render("Cover bonus : +%s" % entity_details.cover_bonus, 1, WHITE)
+            hitchance = FONT8.render("HitChance : {}%".format(int(entity_details.hit_chance)), 1, WHITE)
+            target = FONT8.render("Target : %s" % entity_details.target, 1, WHITE)
 
-                window.blit(name, (10, 588))
-                window.blit(tile, (10, 620))
-                window.blit(status, (10, 630))
-                window.blit(cover, (10, 640))
-                window.blit(hitchance, (10, 650))
-                window.blit(target, (10, 660))
+            window.blit(name, (10, 588))
+            window.blit(tile, (10, 620))
+            window.blit(status, (10, 630))
+            window.blit(cover, (10, 640))
+            window.blit(hitchance, (10, 650))
+            window.blit(target, (10, 660))
 
         # Alliés
         pygame.draw.rect(window, GREY75, (320, 578, 320, 144))
@@ -280,6 +294,15 @@ class Tutorial:
             # Barre d'action
             pygame.draw.rect(window, GREY50, (posx, posy + height + 8, width, 4))
             pygame.draw.rect(window, BLUE, (posx, posy + height + 8, member.cooldown[0] / member.cooldown[1] * width, 4))
+
+            # Chargeur
+            pygame.draw.rect(window, BLACK, (posx, posy + height + 12, width, 8))
+            for emplacement in range(0, member.magazine[1]):
+                if emplacement < member.magazine[0]:
+                    color = WHITE
+                else:
+                    color = GREY25
+                pygame.draw.rect(window, color, (posx + (emplacement * 6) + 2, posy + height + 14, 4, 4))
 
             i += 1
 
@@ -318,6 +341,15 @@ class Tutorial:
             pygame.draw.rect(window, GREY50, (posx, posy + height + 8, width, 4))
             pygame.draw.rect(window, BLUE,
                              (posx, posy + height + 8, mob.cooldown[0] / mob.cooldown[1] * width, 4))
+
+            # Chargeur
+            pygame.draw.rect(window, BLACK, (posx, posy + height + 12, width, 8))
+            for emplacement in range(0, mob.magazine[1]):
+                if emplacement < mob.magazine[0]:
+                    color = WHITE
+                else:
+                    color = GREY25
+                pygame.draw.rect(window, color, (posx + (emplacement * 6) + 2, posy + height + 14, 4, 4))
 
             i += 1
 
@@ -410,13 +442,13 @@ class Tutorial:
         # Zone de spawn allié
         spawns = [[4, 4], [4, 7], [4, 12]]
         for member in soldiers:
-            self.members.append(CombatEntity(member, spawns.pop(0), Weapon('Pistolet automatique', 20, 80)))
+            self.members.append(CombatEntity(member, spawns.pop(0), default_weapons['PAMAS']))
 
         # On génère les mobs
         mobs = [Mob(), Mob()]
         mob_spawn = [[35, 8], [35, 14]]
         for mob in mobs:
-            self.mobs.append(CombatEntity(mob, mob_spawn.pop(0), Weapon('Pistolet automatique', 15, 100)))
+            self.mobs.append(CombatEntity(mob, mob_spawn.pop(0), default_weapons['Pétoire']))
 
     def generate(self, level):
         """ Génère le niveau """

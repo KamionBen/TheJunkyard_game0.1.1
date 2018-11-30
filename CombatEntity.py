@@ -12,16 +12,27 @@ class CombatEntity:
         if type(coord) != Tile:
             coord = Tile(coord)
 
+        if type(entity) != Member:
+            self.mob = True
+        else:
+            self.mob = False
+
         # Informations générales
         self.id = entity.id
         self.name = entity.name
+
+        # Equipement
+        self.weapon = weapon
+        self.magazine = [weapon.magazine, weapon.magazine]
 
         # Compétences d'armes
         if type(entity) == Member:
             self.skills = entity.skills
             self.cooldown = [0, weapon.cooldown * self.skills.get_modifier(weapon.type)]
+            self.reload_time = [0, weapon.reload_time * self.skills.get_modifier(weapon.type)]
         else:
             self.cooldown = [0, weapon.cooldown]
+            self.reload_time = [0, weapon.cooldown]
 
         # Information de jeu
         self.exp = entity.exp
@@ -37,9 +48,6 @@ class CombatEntity:
         self.status = "idle"
         self.cover_bonus = 0
         self.hit_chance = 0
-
-        # Equipement
-        self.weapon = weapon
 
         # Informations graphiques
         self.orientation = 'ea'
@@ -71,21 +79,40 @@ class CombatEntity:
         # TODO : Ce qu'il se passe quand on se fait tirer dessus
         self.ia_activated = True
         self.will[0] -= 80
+        if self.will[0] < 0:
+            self.will[0] = 0
 
     def get_damage(self, damage, log):
         """ Ce qu'il se passe quand l'entité prend des dégâts"""
         self.health[0] -= damage
         self.will[0] -= 50
+        if self.will[0] < 0:
+            self.will[0] = 0
         if self.will[0] / self.will[1] * 100 < 25:
             log.append('Combat', "%s panique !" % self)
         if self.health[0] <= 0:
             log.append('Combat', "%s est KO !" % self)
             self.health[0] = 0
 
+    def calcul_hit_chance(self, target):
+        w_accuracy = self.weapon.accuracy
+        if self.mob:
+            skill_modifier = 1
+        else:
+            skill_modifier = self.skills.get_modifier(self.weapon.type)
+        distance = self.tile.get_distance(target.tile)
+        for dist in distance_range:
+            if distance in dist:
+                dist_indice = distance_range.index(dist)
+        dist_modifier = weapon_type[self.weapon.type][1][dist_indice]
+        cover_bonus = self.target.cover_bonus
+
+        self.hit_chance = self.aim[0] * w_accuracy * skill_modifier * dist_modifier - cover_bonus
+
     def set_target(self, target):
         """ Indique la cible et calcule les chances de toucher """
         self.target = target
-        self.hit_chance = self.aim[0] - self.target.cover_bonus
+        self.calcul_hit_chance(target)
 
     def update(self, map,walls, log, limits):
         """ MàJ des infos du soldat à chaque tick """
@@ -97,15 +124,17 @@ class CombatEntity:
             if neighbour in walls and neighbour.check_limits(limits):
                 self.cover_bonus = 20
 
-        self.status = "idle"
+        # Recharge du cooldown
         if self.cooldown[0] < self.cooldown[1]:
             self.cooldown[0] += 1
 
+        # Recharge de la volonté
         if self.will[0] < self.will[1]:
             self.will[0] += self.will_reload
         else:
             self.will[0] = self.will[1]
 
+        # Vérifier la panique
         if self.will[0] / self.will[1] * 100 < 25:
             self._panick()
 
@@ -113,9 +142,20 @@ class CombatEntity:
             self.cooldown[0] = 0
             self.status = "moving"
             self._move()
+        elif self.magazine[0] == 0:
+            self.status = 'reloading'
+            self._reload()
+
         elif self.target is not False:
-            self.status = "firing"
-            self._fire(self.target, log)
+            self.calcul_hit_chance(self.target)
+            if self.target.is_ko():
+                self.target = False
+                self.status = 'idle'
+            elif self.magazine[0] > 0:
+                self.status = "firing"
+                self._fire(self.target, log)
+            else:
+                self.staus = 'reloading'
 
         # MàJ Graphique
         if self.status == "firing":
@@ -124,6 +164,13 @@ class CombatEntity:
             sprite_x = 0
 
         self.frame = [sprite_x, orientations[self.orientation]]
+
+    def _reload(self):
+        self.cooldown[0] = 0
+        self.reload_time[0] += 1
+        if self.reload_time[0] == self.reload_time[1]:
+            self.magazine[0] = self.magazine[1]
+            self.reload_time[0] = 0
 
     def _panick(self):
         self.status = 'panick'
@@ -144,6 +191,9 @@ class CombatEntity:
                     log.append('Combat', "%s tire sur %s mais le rate" % (self.name, target))
 
                 self.cooldown[0] = 0
+                self.magazine[0] -= 1
+                if self.magazine[0] == 0:
+                    self.status == 'reload'
 
     def _move(self):
         """ Déplacement du soldat """
