@@ -233,7 +233,6 @@ class Tutorial:
 
                 # Le mob devient rouge s'il prend des dégâts
                 if mob.display_dmg > 0:
-                    print("soldier_dmg")
                     window.blit(self.spriteset_dmg, mob.get_pos(), mob.get_sprite())
 
             if mob.fire_at is not False:
