@@ -53,14 +53,15 @@ class CombatEntity:
         self.orientation = 'ea'
         self.tile = coord
         # TODO : self.pos
-        self.pos = [self.tile.abs_pos('x'), self.tile.abs_pos('y') - 28]
+        self.pos = [self.tile.abs_pos('x'), self.tile.abs_pos('y') - 32]
         self.frame = [0, orientations[self.orientation]]
-        self.hitbox = pygame.Rect(self.tile.abs_pos('x') + 5, self.tile.abs_pos('y') - 18, 22, 44)
+        self.hitbox = pygame.Rect(self.tile.abs_pos('x') + 5, self.tile.abs_pos('y') - 22, 22, 44)
 
         # Sélection
         self.selected = False
         self.target = False
         self.fire_at = False
+        self.display_dmg = 0
 
         # Pathfinder
         self.destination = self.tile.copy()
@@ -84,6 +85,7 @@ class CombatEntity:
 
     def get_damage(self, damage, log):
         """ Ce qu'il se passe quand l'entité prend des dégâts"""
+        self.display_dmg = 1
         self.health[0] -= damage
         self.will[0] -= 50
         if self.will[0] < 0:
@@ -164,6 +166,11 @@ class CombatEntity:
             sprite_x = 0
 
         self.frame = [sprite_x, orientations[self.orientation]]
+        if self.display_dmg > 0:
+            if self.display_dmg == 5:
+                self.display_dmg = 0
+            else:
+                self.display_dmg += 1
 
     def _reload(self):
         self.cooldown[0] = 0
@@ -211,8 +218,8 @@ class CombatEntity:
                 self.tile = new_tile.copy()
 
                 # MàJ graphique
-                self.pos = [self.tile.abs_pos('x'), self.tile.abs_pos('y') - 28]
-                self.hitbox = pygame.Rect(self.tile.abs_pos('x') + 5, self.tile.abs_pos('y') - 18, 22, 44)
+                self.pos = [self.tile.abs_pos('x'), self.tile.abs_pos('y') - 32]
+                self.hitbox = pygame.Rect(self.tile.abs_pos('x') + 5, self.tile.abs_pos('y') - 22, 22, 44)
                 self.orientation = azimut
 
                 # Réinitialisation du timer
@@ -227,7 +234,7 @@ class CombatEntity:
 
     def get_sprite(self):
         """ Renvoie le tuple d'affichage de la frame"""
-        return self.frame[0] * 30, self.frame[1] * 60, 30, 60
+        return self.frame[0] * 32, self.frame[1] * 64, 32, 64
 
     def __repr__(self):
         """ Fonction de représentation """

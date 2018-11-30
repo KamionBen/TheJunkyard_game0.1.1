@@ -23,7 +23,9 @@ WIDTH, HEIGHT = 1280, 720
 # Chargement des ressources
 gravel = os.path.join(path, 'img/gravel.png')
 crate = os.path.join(path, 'img/crate.png')
-soldier_sprite_30 = os.path.join(path, 'img/soldier_sprite_30.png')
+soldier_sprite = os.path.join(path, 'img/soldier_sprite_32.png')
+soldier_sprite_hl = os.path.join(path, 'img/soldier_sprite_32_hl.png')
+soldier_sprite_dmg = os.path.join(path, 'img/soldier_sprite_32_damages.png')
 overlay = os.path.join(path, 'img/overlay.png')
 tile_hl = os.path.join(path, 'img/tile_hl.png')
 dead = os.path.join(path, 'img/dead.png')
@@ -82,7 +84,10 @@ class Tutorial:
         # Images
         self.gravel = pygame.image.load(gravel).convert()
         self.crate = pygame.image.load(crate).convert()
-        self.spriteset = pygame.image.load(soldier_sprite_30).convert_alpha()
+        self.spriteset = pygame.image.load(soldier_sprite).convert_alpha()
+        self.spriteset_hl = pygame.image.load(soldier_sprite_hl).convert_alpha()
+        self.spriteset_dmg = pygame.image.load(soldier_sprite_dmg).convert_alpha()
+
         self.hl_img = pygame.image.load(overlay).convert_alpha()
         self.tile_hl = pygame.image.load(tile_hl).convert_alpha()
         self.dead = pygame.image.load(dead).convert_alpha()
@@ -205,13 +210,16 @@ class Tutorial:
                 pygame.draw.rect(window, BLUE, member.hitbox)
             if member.selected:
                 # Fond vert si le soldat est activé
-                # TODO : Essaye de faire un truc plus joli
-                pygame.draw.rect(window, GREEN, member.hitbox)
+                window.blit(self.spriteset_hl, member.get_pos(), (member.get_sprite()))
 
             if member.fire_at is not False:
                 pygame.draw.line(window, WHITE, member.tile.abs_pos(), member.fire_at.tile.abs_pos())
 
-            window.blit(self.spriteset, member.get_pos(), (member.frame[0] * 30, member.frame[1] * 60, 30, 60))
+            window.blit(self.spriteset, member.get_pos(), (member.get_sprite()))
+
+            # Le soldat devient rouge s'il prend des dégâts
+            if member.display_dmg > 0:
+                window.blit(self.spriteset_dmg, member.get_pos(), (member.get_sprite()))
 
         # Ennemis
         for mob in self.mobs:
@@ -221,7 +229,12 @@ class Tutorial:
             if mob.is_ko():
                 window.blit(self.dead, mob.get_pos(True))
             else:
-                window.blit(self.spriteset, mob.get_pos(), (mob.frame[0] * 30, mob.frame[1] * 60, 30, 60))
+                window.blit(self.spriteset, mob.get_pos(), (mob.get_sprite()))
+
+                # Le mob devient rouge s'il prend des dégâts
+                if mob.display_dmg > 0:
+                    print("soldier_dmg")
+                    window.blit(self.spriteset_dmg, mob.get_pos(), mob.get_sprite())
 
             if mob.fire_at is not False:
                 pygame.draw.line(window, WHITE, mob.tile.abs_pos(), mob.fire_at.tile.abs_pos())
@@ -429,9 +442,9 @@ class Tutorial:
     def generate_sold_mobs(self):
         """ Génère les soldats et les mobs """
         # TODO : Permettre de changer les paramètres
-        soldiers = [Member('Michel', 6, 100, 55, 100, 4, 6, ['A', 'B']),
-                    Member('Bob', 5, 100, 55, 100, 3, 6, ['B', 'C']),
-                    Member('Arthur', 7, 100, 55, 100, 4, 6, ['A', 'C', 'B'])]
+        soldiers = [Member('Michel', 6, 100, 65, 100, 4, 6, ['A', 'B']),
+                    Member('Bob', 5, 100, 65, 100, 3, 6, ['B', 'C']),
+                    Member('Arthur', 7, 100, 65, 100, 4, 6, ['A', 'C', 'B'])]
 
         # On fait se rencontrer les soldats
         for member in soldiers:
